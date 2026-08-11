@@ -25,6 +25,12 @@ class ResidentsTable
             ->columns([
                 TextColumn::make('nik')
                     ->label('NIK')
+                    ->formatStateUsing(function (?string $state): string {
+                        if (blank($state)) {
+                            return '-';
+                        }
+                        return substr($state, 0, 4) . '••••••••' . substr($state, -4);
+                    })
                     ->searchable(),
                 TextColumn::make('full_name')
                     ->label('Nama Lengkap')
