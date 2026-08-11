@@ -2,6 +2,13 @@
 
 namespace App\Filament\Resources\Residents\Schemas;
 
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+
+use App\Models\Resident;
+use Filament\Actions\Action;
+use Filament\Forms\Components\TextInput;
+use Filament\Support\Icons\Heroicon;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Schema;
@@ -13,7 +20,63 @@ class ResidentInfolist
         return $schema
             ->components([
                 TextEntry::make('nik')
-                    ->label('NIK'),
+                    ->label('NIK')
+                    ->formatStateUsing(function (?string $state, Resident $record): string {
+                        if (blank($state)) {
+                            return '-';
+                        }
+
+                        $revealedUntil = session("resident_nik_revealed.{$record->getKey()}");
+
+                        if ($revealedUntil && now()->lessThan($revealedUntil)) {
+                            return $state;
+                        }
+
+                        return substr($state, 0, 4) . '••••••••' . substr($state, -4);
+                    })
+                    ->suffixAction(
+                        Action::make('revealNik')
+                            ->label('Tampilkan NIK')
+                            ->icon(Heroicon::Eye)
+                            ->color('gray')
+                            ->schema([
+                                TextInput::make('password')
+                                    ->label('Password akun Anda')
+                                    ->password()
+                                    ->revealable()
+                                    ->required()
+                                    ->autocomplete('current-password')
+                                    ->rules([
+                                        function (): \Closure {
+                                            return function (
+                                                string $attribute,
+                                                mixed $value,
+                                                \Closure $fail
+                                            ): void {
+                                                $user = Auth::user();
+
+                                                if (
+                                                    ! $user ||
+                                                    ! Hash::check($value, $user->getAuthPassword())
+                                                ) {
+                                                    $fail('Password yang dimasukkan tidak benar.');
+                                                }
+                                            };
+                                        },
+                                    ]),
+                            ])
+                            ->modalHeading('Verifikasi untuk Melihat NIK')
+                            ->modalDescription(
+                                'Masukkan password akun Anda untuk melihat NIK lengkap. NIK akan ditampilkan sementara.'
+                            )
+                            ->modalSubmitActionLabel('Tampilkan NIK')
+                            ->modalCancelActionLabel('Batal')
+                            ->action(function (Resident $record): void {
+                                session([
+                                    "resident_nik_revealed.{$record->getKey()}" => now()->addMinutes(5),
+                                ]);
+                            }),
+                    ),
                 TextEntry::make('full_name')
                     ->label('Nama Lengkap'),
                 TextEntry::make('household.no_kk')
