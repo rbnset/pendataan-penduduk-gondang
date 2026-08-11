@@ -30,6 +30,8 @@ class Resident extends Model
         'father_name',
         'mother_name',
         'birth_cert_number',
+        'birth_cert_issuer',
+        'has_ktp',
         'status',
         'status_date',
         'status_note',
@@ -38,6 +40,7 @@ class Resident extends Model
     protected $casts = [
         'birth_date' => 'date',
         'status_date' => 'date',
+        'has_ktp' => 'boolean',
     ];
 
     protected function age(): Attribute
@@ -50,7 +53,9 @@ class Resident extends Model
     protected function ageInDays(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->birth_date ? (int) $this->birth_date->diffInDays(now()) : null,
+            get: fn () => $this->birth_date
+                ? (int) $this->birth_date->diffInDays(now())
+                : null,
         );
     }
 
