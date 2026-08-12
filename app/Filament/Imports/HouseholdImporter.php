@@ -4,6 +4,7 @@ namespace App\Filament\Imports;
 
 use App\Models\Household;
 use App\Models\Rt;
+use App\Models\Rw;
 use Filament\Actions\Imports\Exceptions\RowImportFailedException;
 use Filament\Actions\Imports\ImportColumn;
 use Filament\Actions\Imports\Importer;
@@ -20,19 +21,19 @@ class HouseholdImporter extends Importer
             ImportColumn::make('rw_number')
                 ->label('Nomor RW')
                 ->requiredMapping()
-                ->rules(['required'])
-                ->fillRecordUsing(fn () => null),
+                ->rules(['required', 'integer', 'min:1'])
+                ->fillRecordUsing(fn() => null),
 
             ImportColumn::make('rt_number')
                 ->label('Nomor RT')
                 ->requiredMapping()
-                ->rules(['required'])
-                ->fillRecordUsing(fn () => null),
+                ->rules(['required', 'integer', 'min:1'])
+                ->fillRecordUsing(fn() => null),
 
             ImportColumn::make('no_kk')
                 ->label('Nomor KK')
                 ->requiredMapping()
-                ->rules(['required', 'max:20']),
+                ->rules(['required', 'digits:16']),
 
             ImportColumn::make('address')
                 ->label('Alamat')
@@ -41,24 +42,29 @@ class HouseholdImporter extends Importer
 
             ImportColumn::make('pln_customer_number')
                 ->label('ID Pelanggan PLN')
-                ->rules(['max:20']),
+                ->rules(['nullable', 'max:20']),
         ];
     }
 
     public function resolveRecord(): Household
     {
-        $rt = Rt::whereHas('rw', fn ($q) => $q->where('number', $this->data['rw_number']))
-            ->where('number', $this->data['rt_number'])
-            ->first();
+        // Cast ke integer supaya "99", " 99 ", "099" semua dianggap sama,
+        // dan cocok dengan tipe kolom number (integer) di DB.
+        $rwNumber = (int) trim((string) $this->data['rw_number']);
+        $rtNumber = (int) trim((string) $this->data['rt_number']);
+        $noKk = trim((string) $this->data['no_kk']);
 
-        if (! $rt) {
-            throw new RowImportFailedException(
-                "Kombinasi RW {$this->data['rw_number']} / RT {$this->data['rt_number']} tidak ditemukan."
-            );
-        }
+        // Auto-create RW kalau belum ada.
+        $rw = Rw::firstOrCreate(['number' => $rwNumber]);
+
+        // Auto-create RT (di dalam RW tersebut) kalau belum ada.
+        $rt = Rt::firstOrCreate([
+            'rw_id' => $rw->id,
+            'number' => $rtNumber,
+        ]);
 
         $household = Household::firstOrNew([
-            'no_kk' => $this->data['no_kk'],
+            'no_kk' => $noKk,
         ]);
 
         $household->rt_id = $rt->id;

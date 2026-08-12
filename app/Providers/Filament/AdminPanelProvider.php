@@ -29,6 +29,8 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->login()
             ->colors([
@@ -37,7 +39,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('SIDUKUH Gondang')
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
-                fn (): string => '<style>
+                fn(): string => '<style>
                 .fi-dropdown-panel {
                     max-height: 24rem;
                     overflow-y: auto;
@@ -47,9 +49,10 @@ class AdminPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([
-                Dashboard::class,
+                // Dashboard::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
+            ->discoverClusters(in: app_path('Filament/Clusters'), for: 'App\\Filament\\Clusters')
             ->widgets([
                 //
             ])
@@ -66,7 +69,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->plugins([
                 FilamentShieldPlugin::make(),
-                
+
             ])
             ->authMiddleware([
                 Authenticate::class,
