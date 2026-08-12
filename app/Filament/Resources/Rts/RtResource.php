@@ -29,6 +29,11 @@ class RtResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Data Kependudukan';
     protected static ?int $navigationSort = 2;
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return RtForm::configure($schema);
