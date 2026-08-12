@@ -7,9 +7,9 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Schema;
 
 class ResidentForm
 {
@@ -18,25 +18,29 @@ class ResidentForm
         return $schema
             ->components([
 
-                // =====================================================
+                // =========================================================
                 // IDENTITAS WARGA
-                // =====================================================
+                // =========================================================
                 Section::make('Identitas Warga')
                     ->description('Data utama untuk mengidentifikasi warga.')
                     ->icon('heroicon-o-identification')
                     ->schema([
+
                         TextInput::make('nik')
                             ->label('NIK')
-                            ->placeholder('Masukkan 16 digit NIK')
-                            ->required()
+                            ->placeholder('Contoh: 3309051219990001')
+                            ->helperText('NIK terdiri dari 16 digit angka.')
+                            ->inputMode('numeric')
                             ->length(16)
-                            ->rule('digits:16')
-                            ->inputMode('numeric'),
+                            ->maxLength(16)
+                            ->required()
+                            ->columnSpanFull(),
 
                         TextInput::make('full_name')
                             ->label('Nama Lengkap')
                             ->placeholder('Contoh: Budi Santoso')
-                            ->required(),
+                            ->required()
+                            ->columnSpanFull(),
 
                         Select::make('household_id')
                             ->relationship('household', 'no_kk')
@@ -44,26 +48,31 @@ class ResidentForm
                             ->placeholder('Pilih nomor KK')
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()
+                            ->columnSpanFull(),
 
                         Select::make('user_id')
                             ->relationship('user', 'name')
                             ->label('Akun Login')
                             ->placeholder('Pilih akun jika warga memiliki akses login')
+                            ->helperText('Opsional — dapat dikosongkan.')
                             ->searchable()
                             ->preload()
-                            ->default(null),
+                            ->default(null)
+                            ->columnSpanFull(),
+
                     ])
-                    ->columns(2)
+                    ->columns(1)
                     ->columnSpanFull(),
 
-                // =====================================================
+                // =========================================================
                 // DATA KELAHIRAN
-                // =====================================================
+                // =========================================================
                 Section::make('Data Kelahiran')
                     ->description('Informasi tempat, tanggal, dan karakteristik kelahiran warga.')
                     ->icon('heroicon-o-cake')
                     ->schema([
+
                         TextInput::make('birth_place')
                             ->label('Tempat Lahir')
                             ->placeholder('Contoh: Bantul')
@@ -72,6 +81,8 @@ class ResidentForm
                         DatePicker::make('birth_date')
                             ->label('Tanggal Lahir')
                             ->placeholder('Pilih tanggal lahir')
+                            ->displayFormat('d/m/Y')
+                            ->native(false)
                             ->required(),
 
                         Select::make('gender')
@@ -94,17 +105,19 @@ class ResidentForm
                                 'Tidak Tahu' => 'Tidak Tahu',
                             ])
                             ->default(null),
+
                     ])
                     ->columns(2)
                     ->columnSpanFull(),
 
-                // =====================================================
+                // =========================================================
                 // DATA KELUARGA
-                // =====================================================
+                // =========================================================
                 Section::make('Data Keluarga')
                     ->description('Informasi hubungan warga dalam keluarga.')
-                    ->icon('heroicon-o-users')
+                    ->icon('heroicon-o-user-group')
                     ->schema([
+
                         Select::make('relationship_to_head')
                             ->label('Status dalam Keluarga')
                             ->placeholder('Pilih status dalam keluarga')
@@ -123,6 +136,7 @@ class ResidentForm
 
                         Select::make('marital_status')
                             ->label('Status Perkawinan')
+                            ->placeholder('Pilih status perkawinan')
                             ->options([
                                 'Belum Kawin' => 'Belum Kawin',
                                 'Kawin' => 'Kawin',
@@ -141,19 +155,22 @@ class ResidentForm
                             ->label('Nama Ibu')
                             ->placeholder('Contoh: Ibu Siti')
                             ->default(null),
+
                     ])
                     ->columns(2)
                     ->columnSpanFull(),
 
-                // =====================================================
+                // =========================================================
                 // DATA KEPENDUDUKAN
-                // =====================================================
+                // =========================================================
                 Section::make('Data Kependudukan')
                     ->description('Status dan dokumen administrasi kependudukan warga.')
                     ->icon('heroicon-o-building-library')
                     ->schema([
+
                         Select::make('status')
                             ->label('Status Kependudukan')
+                            ->placeholder('Pilih status kependudukan')
                             ->options([
                                 'Aktif' => 'Aktif',
                                 'Pindah' => 'Pindah',
@@ -181,27 +198,33 @@ class ResidentForm
                         DatePicker::make('status_date')
                             ->label('Tanggal Pindah/Meninggal')
                             ->placeholder('Pilih tanggal')
-                            ->disabled(fn (Get $get) => $get('status') === 'Aktif')
-                            ->dehydrated(fn (Get $get) => $get('status') !== 'Aktif'),
+                            ->displayFormat('d/m/Y')
+                            ->native(false)
+                            ->disabled(fn(Get $get): bool => $get('status') === 'Aktif')
+                            ->required(fn(Get $get): bool => $get('status') !== 'Aktif')
+                            ->dehydrated(fn(Get $get): bool => $get('status') !== 'Aktif'),
 
                         Textarea::make('status_note')
                             ->label('Keterangan Status')
                             ->placeholder('Tambahkan keterangan jika diperlukan...')
-                            ->disabled(fn (Get $get) => $get('status') === 'Aktif')
-                            ->dehydrated(fn (Get $get) => $get('status') !== 'Aktif')
+                            ->rows(3)
+                            ->disabled(fn(Get $get): bool => $get('status') === 'Aktif')
+                            ->dehydrated(fn(Get $get): bool => $get('status') !== 'Aktif')
                             ->default(null)
                             ->columnSpanFull(),
+
                     ])
                     ->columns(2)
                     ->columnSpanFull(),
 
-                // =====================================================
+                // =========================================================
                 // DATA SOSIAL
-                // =====================================================
+                // =========================================================
                 Section::make('Data Sosial')
                     ->description('Informasi pendidikan, agama, dan pekerjaan warga.')
                     ->icon('heroicon-o-academic-cap')
                     ->schema([
+
                         Select::make('religion')
                             ->label('Agama')
                             ->placeholder('Pilih agama')
@@ -234,6 +257,7 @@ class ResidentForm
                             ->label('Pekerjaan')
                             ->placeholder('Contoh: Petani, Guru, Wiraswasta')
                             ->default(null),
+
                     ])
                     ->columns(2)
                     ->columnSpanFull(),
