@@ -229,17 +229,16 @@ class ResidentsTable
                     ]),
 
                 Filter::make('age_range')
-                    ->label('Rentang Usia (Tahun)')
+                    ->label('Rentang Usia')
                     ->schema([
                         TextInput::make('age_from')
                             ->label('Usia dari (tahun)')
                             ->numeric()
-                            ->step(0.1)
                             ->minValue(0),
+
                         TextInput::make('age_to')
                             ->label('Usia sampai (tahun)')
                             ->numeric()
-                            ->step(0.1)
                             ->minValue(0),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
@@ -249,7 +248,7 @@ class ResidentsTable
                                 fn (Builder $q) => $q->whereDate(
                                     'birth_date',
                                     '<=',
-                                    now()->subDays((int) round($data['age_from'] * 365.25))->format('Y-m-d')
+                                    now()->subYears((int) $data['age_from'])->format('Y-m-d')
                                 )
                             )
                             ->when(
@@ -257,7 +256,7 @@ class ResidentsTable
                                 fn (Builder $q) => $q->whereDate(
                                     'birth_date',
                                     '>=',
-                                    now()->subDays((int) round($data['age_to'] * 365.25))->format('Y-m-d')
+                                    now()->subYears((int) $data['age_to'] + 1)->addDay()->format('Y-m-d')
                                 )
                             );
                     }),

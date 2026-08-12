@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Household extends Model
 {
@@ -17,6 +18,7 @@ class Household extends Model
         'rt_id',
         'no_kk',
         'address',
+        'pln_customer_number',
     ];
 
     public function rt(): BelongsTo
@@ -29,8 +31,9 @@ class Household extends Model
         return $this->hasMany(Resident::class);
     }
 
-    public function head(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function head(): HasOne
     {
-        return $this->hasOne(Resident::class)->where('relationship_to_head', 'Kepala Keluarga');
+        return $this->hasOne(Resident::class)
+            ->where('relationship_to_head', 'Kepala Keluarga');
     }
 }

@@ -16,45 +16,39 @@ class HouseholdsTable
             ->columns([
                 TextColumn::make('no_kk')
                     ->label('Nomor KK')
-                    ->searchable(),
-                TextColumn::make('pln_customer_number')
-                    ->label('ID PLN')
                     ->searchable()
-                    ->placeholder('Belum Diisi')
-                    ->toggleable(),
-                TextColumn::make('rt.number')
-                    ->label('RT')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('rt.rw.number')
-                    ->label('RW')
-                    ->searchable(),
+                    ->copyable(),
+
                 TextColumn::make('head.full_name')
                     ->label('Kepala Keluarga')
-                    ->default('-'),
+                    ->default('-')
+                    ->searchable(),
+
+                TextColumn::make('rt.number')
+                    ->label('RT')
+                    ->sortable(),
+
+                TextColumn::make('rt.rw.number')
+                    ->label('RW')
+                    ->sortable(),
+
                 TextColumn::make('address')
                     ->label('Alamat')
-                    ->limit(30)
+                    ->limit(40)
                     ->searchable(),
+
                 TextColumn::make('residents_count')
-                    ->label('Jumlah Anggota')
+                    ->label('Anggota')
                     ->counts('residents')
                     ->sortable(),
-                TextColumn::make('created_at')
-                    ->label('Dibuat Pada')
-                    ->dateTime('d M Y')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->label('Diperbarui Pada')
-                    ->dateTime('d M Y')
-                    ->sortable()
+
+                TextColumn::make('pln_customer_number')
+                    ->label('ID PLN')
+                    ->placeholder('Belum diisi')
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->striped()
-            ->filters([
-                //
-            ])
+            ->defaultSort('no_kk')
             ->recordActions([
                 EditAction::make(),
             ])
