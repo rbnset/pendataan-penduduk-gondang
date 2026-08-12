@@ -2,8 +2,6 @@
 
 namespace App\Filament\Resources\Rws\Schemas;
 
-use App\Models\Rw;
-use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
@@ -14,23 +12,21 @@ class RwForm
     {
         return $schema
             ->components([
+
                 TextInput::make('number')
                     ->label('Nomor RW')
+                    ->placeholder('Contoh: 01')
                     ->required(),
+
                 Select::make('chairman_resident_id')
-                    ->relationship(
-                        name: 'chairman',
-                        titleAttribute: 'full_name',
-                        modifyQueryUsing: fn (Builder $query, ?Rw $record) =>$record
-                            ? $query->whereHas('household.rt', fn (Builder $q) => $q->where('rw_id', $record->id))
-                                ->where('status', 'Aktif')
-                                ->whereDate('birth_date', '<=', now()->subYears(17)->format('Y-m-d'))
-                            : $query->whereRaw('1=0'),
-                    )
+                    ->relationship('chairman', 'full_name')
                     ->label('Ketua RW')
+                    ->placeholder('Pilih ketua RW')
+                    ->helperText('Opsional — biasanya baru bisa dipilih setelah warga di wilayah ini terdaftar.')
                     ->searchable()
                     ->preload()
                     ->default(null),
+
             ]);
     }
 }

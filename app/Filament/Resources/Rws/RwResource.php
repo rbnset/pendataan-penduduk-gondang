@@ -5,7 +5,10 @@ namespace App\Filament\Resources\Rws;
 use App\Filament\Resources\Rws\Pages\CreateRw;
 use App\Filament\Resources\Rws\Pages\EditRw;
 use App\Filament\Resources\Rws\Pages\ListRws;
+use App\Filament\Resources\Rws\Pages\ViewRw;
+use App\Filament\Resources\Rws\RelationManagers\RtsRelationManager;
 use App\Filament\Resources\Rws\Schemas\RwForm;
+use App\Filament\Resources\Rws\Schemas\RwInfolist;
 use App\Filament\Resources\Rws\Tables\RwsTable;
 use App\Models\Rw;
 use BackedEnum;
@@ -22,9 +25,9 @@ class RwResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'number';
 
-    protected static ?string $modelLabel = 'RW';
-    protected static ?string $pluralModelLabel = 'RW';
-    protected static ?string $navigationLabel = 'RW';
+    protected static ?string $modelLabel = 'Wilayah';
+    protected static ?string $pluralModelLabel = 'Wilayah';
+    protected static ?string $navigationLabel = 'Wilayah';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Data Kependudukan';
     protected static ?int $navigationSort = 1;
@@ -39,10 +42,15 @@ class RwResource extends Resource
         return RwsTable::configure($table);
     }
 
+    public static function infolist(Schema $schema): Schema
+    {
+        return RwInfolist::configure($schema);
+    }
+
     public static function getRelations(): array
     {
         return [
-            //
+            RtsRelationManager::class,
         ];
     }
 
@@ -56,6 +64,7 @@ class RwResource extends Resource
         return [
             'index' => ListRws::route('/'),
             'create' => CreateRw::route('/create'),
+            'view' => ViewRw::route('/{record}'),
             'edit' => EditRw::route('/{record}/edit'),
         ];
     }
