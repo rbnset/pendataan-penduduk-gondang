@@ -5,7 +5,10 @@ namespace App\Filament\Resources\Households;
 use App\Filament\Resources\Households\Pages\CreateHousehold;
 use App\Filament\Resources\Households\Pages\EditHousehold;
 use App\Filament\Resources\Households\Pages\ListHouseholds;
+use App\Filament\Resources\Households\Pages\ViewHousehold;
+use App\Filament\Resources\Households\RelationManagers\ResidentsRelationManager;
 use App\Filament\Resources\Households\Schemas\HouseholdForm;
+use App\Filament\Resources\Households\Schemas\HouseholdInfolist;
 use App\Filament\Resources\Households\Tables\HouseholdsTable;
 use App\Models\Household;
 use BackedEnum;
@@ -39,10 +42,15 @@ class HouseholdResource extends Resource
         return HouseholdsTable::configure($table);
     }
 
+    public static function infolist(Schema $schema): Schema
+    {
+        return HouseholdInfolist::configure($schema);
+    }
+
     public static function getRelations(): array
     {
         return [
-            //
+            ResidentsRelationManager::class,
         ];
     }
 
@@ -56,6 +64,7 @@ class HouseholdResource extends Resource
         return [
             'index' => ListHouseholds::route('/'),
             'create' => CreateHousehold::route('/create'),
+            'view' => ViewHousehold::route('/{record}'),
             'edit' => EditHousehold::route('/{record}/edit'),
         ];
     }
