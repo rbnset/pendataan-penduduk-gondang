@@ -2,13 +2,14 @@
 
 namespace App\Filament\Resources\Marriages\Tables;
 
-use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
-use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 
 class MarriagesTable
@@ -17,77 +18,92 @@ class MarriagesTable
     {
         return $table
             ->columns([
+
+                TextColumn::make('marriage_certificate_number')
+                    ->label('No. Akta Nikah')
+                    ->searchable()
+                    ->copyable()
+                    ->copyMessage('Nomor akta disalin')
+                    ->weight('semibold'),
+
                 TextColumn::make('husband.full_name')
                     ->label('Suami')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->placeholder('-'),
+
                 TextColumn::make('wife.full_name')
                     ->label('Istri')
                     ->searchable()
-                    ->sortable(),
-                TextColumn::make('marriage_certificate_number')
-                    ->label('No. Akta Nikah')
-                    ->searchable(),
+                    ->sortable()
+                    ->placeholder('-'),
+
                 TextColumn::make('marriage_date')
                     ->label('Tanggal Nikah')
                     ->date('d M Y')
                     ->sortable(),
+
                 TextColumn::make('kua_name')
-                    ->label('KUA')
-                    ->searchable(),
-                TextColumn::make('divorce_certificate_number')
-                    ->label('No. Akta Cerai')
-                    ->searchable()
-                    ->toggleable(),
-                TextColumn::make('marriage_status')
+                    ->label('KUA Pencatat')
+                    ->toggleable()
+                    ->placeholder('-'),
+
+                TextColumn::make('status')
                     ->label('Status')
-                    ->state(fn ($record) => $record->divorce_date ? 'Berakhir' : 'Aktif')
+                    ->state(fn($record) => $record->divorce_date ? 'Bercerai' : 'Aktif')
                     ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'Aktif' => 'success',
-                        'Berakhir' => 'gray',
-                        default => 'gray',
-                    }),
+                    ->color(fn(string $state) => $state === 'Bercerai' ? 'danger' : 'success'),
+
                 TextColumn::make('divorce_date')
                     ->label('Tanggal Cerai')
                     ->date('d M Y')
-                    ->sortable()
-                    ->toggleable(),
+                    ->placeholder('-')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('created_at')
-                    ->label('Dibuat Pada')
-                    ->dateTime('d M Y')
+                    ->label('Dibuat')
+                    ->dateTime('d M Y, H:i')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('updated_at')
-                    ->label('Diperbarui Pada')
-                    ->dateTime('d M Y')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+
             ])
-            ->striped()
             ->filters([
-                SelectFilter::make('marriage_status')
+
+                TernaryFilter::make('status')
                     ->label('Status Pernikahan')
-                    ->options([
-                        'active' => 'Aktif',
-                        'history' => 'Riwayat',
+                    ->placeholder('Semua status')
+                    ->trueLabel('Aktif')
+                    ->falseLabel('Bercerai')
+                    ->queries(
+                        true: fn(Builder $query) => $query->whereNull('divorce_date'),
+                        false: fn(Builder $query) => $query->whereNotNull('divorce_date'),
+                        blank: fn(Builder $query) => $query,
+                    ),
+
+                Filter::make('marriage_date')
+                    ->schema([
+                        \Filament\Forms\Components\DatePicker::make('from')
+                            ->label('Dari Tanggal')
+                            ->native(false),
+                        \Filament\Forms\Components\DatePicker::make('until')
+                            ->label('Sampai Tanggal')
+                            ->native(false),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
-                        return match ($data['value'] ?? null) {
-                            'active' => $query->whereNull('divorce_date'),
-                            'history' => $query->whereNotNull('divorce_date'),
-                            default => $query,
-                        };
+                        return $query
+                            ->when($data['from'] ?? null, fn(Builder $q, $date) => $q->whereDate('marriage_date', '>=', $date))
+                            ->when($data['until'] ?? null, fn(Builder $q, $date) => $q->whereDate('marriage_date', '<=', $date));
                     }),
+
             ])
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+                DeleteAction::make(),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
-            ]);
+                DeleteBulkAction::make(),
+            ])
+            ->defaultSort('marriage_date', 'desc');
     }
 }

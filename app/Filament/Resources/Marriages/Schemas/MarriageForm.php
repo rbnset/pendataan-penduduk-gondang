@@ -2,13 +2,15 @@
 
 namespace App\Filament\Resources\Marriages\Schemas;
 
-use App\Models\Marriage;
 use App\Models\Resident;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
-use Illuminate\Database\Eloquent\Builder;
 
 class MarriageForm
 {
@@ -16,100 +18,131 @@ class MarriageForm
     {
         return $schema
             ->components([
-                Select::make('husband_resident_id')
-                    ->label('Suami')
-                    ->relationship(
-                        name: 'husband',
-                        titleAttribute: 'full_name',
-                        modifyQueryUsing: fn (Builder $query) => $query
-                            ->where('gender', 'Laki-laki')
-                            ->where('status', 'Aktif'),
-                    )
-                    ->searchable()
-                    ->preload()
-                    ->required()
-                    ->different('wife_resident_id')
-                    ->rules([
-                        function ($record) {
-                            return function (string $attribute, $value, \Closure $fail) use ($record) {
-                                $query = Marriage::active()
-                                    ->where(function ($query) use ($value) {
-                                        $query
-                                            ->where('husband_resident_id', $value)
-                                            ->orWhere('wife_resident_id', $value);
-                                    });
 
-                                if ($record) {
-                                    $query->whereKeyNot($record->id);
-                                }
+                // =========================================================
+                // DATA PASANGAN
+                // =========================================================
+                Section::make('Data Pasangan')
+                    ->description('Pilih warga yang tercatat sebagai suami dan istri.')
+                    ->icon('heroicon-o-user-group')
+                    ->schema([
+                        Grid::make(2)
+                            ->schema([
 
-                                if ($query->exists()) {
-                                    $fail('Resident ini masih memiliki perkawinan aktif.');
-                                }
-                            };
-                        },
+                                Select::make('husband_resident_id')
+                                    ->label('Suami')
+                                    ->relationship(
+                                        name: 'husband',
+                                        titleAttribute: 'full_name',
+                                        modifyQueryUsing: fn($query) => $query->where('gender', 'Laki-laki'),
+                                    )
+                                    ->getOptionLabelFromRecordUsing(
+                                        fn(Resident $record) => "{$record->full_name} — {$record->nik}"
+                                    )
+                                    ->searchable(['full_name', 'nik'])
+                                    ->preload()
+                                    ->native(false)
+                                    ->placeholder('Pilih warga (suami)')
+                                    ->required()
+                                    ->distinct(),
+
+                                Select::make('wife_resident_id')
+                                    ->label('Istri')
+                                    ->relationship(
+                                        name: 'wife',
+                                        titleAttribute: 'full_name',
+                                        modifyQueryUsing: fn($query) => $query->where('gender', 'Perempuan'),
+                                    )
+                                    ->getOptionLabelFromRecordUsing(
+                                        fn(Resident $record) => "{$record->full_name} — {$record->nik}"
+                                    )
+                                    ->searchable(['full_name', 'nik'])
+                                    ->preload()
+                                    ->native(false)
+                                    ->placeholder('Pilih warga (istri)')
+                                    ->required()
+                                    ->distinct(),
+
+                            ]),
                     ]),
 
-                Select::make('wife_resident_id')
-                    ->label('Istri')
-                    ->relationship(
-                        name: 'wife',
-                        titleAttribute: 'full_name',
-                        modifyQueryUsing: fn (Builder $query) => $query
-                            ->where('gender', 'Perempuan')
-                            ->where('status', 'Aktif'),
-                    )
-                    ->searchable()
-                    ->preload()
-                    ->required()
-                    ->different('husband_resident_id')
-                    ->rules([
-                        function ($record) {
-                            return function (string $attribute, $value, \Closure $fail) use ($record) {
-                                $query = Marriage::active()
-                                    ->where(function ($query) use ($value) {
-                                        $query
-                                            ->where('husband_resident_id', $value)
-                                            ->orWhere('wife_resident_id', $value);
-                                    });
+                // =========================================================
+                // DATA AKTA NIKAH
+                // =========================================================
+                Section::make('Data Akta Nikah')
+                    ->description('Informasi pencatatan pernikahan secara resmi.')
+                    ->icon('heroicon-o-document-text')
+                    ->schema([
+                        Grid::make(2)
+                            ->schema([
 
-                                if ($record) {
-                                    $query->whereKeyNot($record->id);
-                                }
+                                TextInput::make('marriage_certificate_number')
+                                    ->label('Nomor Akta Nikah')
+                                    ->prefixIcon('heroicon-o-hashtag')
+                                    ->placeholder('Contoh: 1234/NK/2020')
+                                    ->required()
+                                    ->maxLength(50)
+                                    ->columnSpanFull(),
 
-                                if ($query->exists()) {
-                                    $fail('Resident ini masih memiliki perkawinan aktif.');
-                                }
-                            };
-                        },
+                                DatePicker::make('marriage_date')
+                                    ->label('Tanggal Nikah')
+                                    ->placeholder('Pilih tanggal nikah')
+                                    ->displayFormat('d/m/Y')
+                                    ->native(false)
+                                    ->required(),
+
+                                TextInput::make('kua_name')
+                                    ->label('KUA Pencatat')
+                                    ->prefixIcon('heroicon-o-building-library')
+                                    ->placeholder('Contoh: KUA Kecamatan Banyudono')
+                                    ->maxLength(100),
+
+                            ]),
                     ]),
 
-                TextInput::make('marriage_certificate_number')
-                    ->label('Nomor Akta Nikah')
-                    ->maxLength(50)
-                    ->default(null),
+                // =========================================================
+                // STATUS PERCERAIAN (opsional)
+                // =========================================================
+                Section::make('Status Perceraian')
+                    ->description('Aktifkan hanya jika pernikahan telah berakhir dengan perceraian.')
+                    ->icon('heroicon-o-scale')
+                    ->schema([
 
-                DatePicker::make('marriage_date')
-                    ->label('Tanggal Nikah')
-                    ->required()
-                    ->maxDate(now()),
+                        Toggle::make('is_divorced')
+                            ->label('Pernikahan Telah Bercerai')
+                            ->live()
+                            ->dehydrated(false)
+                            ->afterStateHydrated(function (Toggle $component, $record) {
+                                $component->state($record && $record->divorce_date !== null);
+                            })
+                            ->columnSpanFull(),
 
-                TextInput::make('kua_name')
-                    ->label('KUA')
-                    ->maxLength(150)
-                    ->default(null),
+                        Grid::make(2)
+                            ->schema([
 
-                TextInput::make('divorce_certificate_number')
-                    ->label('Nomor Akta Cerai')
-                    ->maxLength(50)
-                    ->default(null)
-                    ->requiredWith('divorce_date'),
+                                TextInput::make('divorce_certificate_number')
+                                    ->label('Nomor Akta Cerai')
+                                    ->prefixIcon('heroicon-o-hashtag')
+                                    ->placeholder('Contoh: 5678/CR/2023')
+                                    ->maxLength(50)
+                                    ->visible(fn(Get $get) => $get('is_divorced'))
+                                    ->required(fn(Get $get) => $get('is_divorced')),
 
-                DatePicker::make('divorce_date')
-                    ->label('Tanggal Cerai')
-                    ->after('marriage_date')
-                    ->maxDate(now())
-                    ->requiredWith('divorce_certificate_number'),
-            ]);
+                                DatePicker::make('divorce_date')
+                                    ->label('Tanggal Cerai')
+                                    ->placeholder('Pilih tanggal cerai')
+                                    ->displayFormat('d/m/Y')
+                                    ->native(false)
+                                    ->visible(fn(Get $get) => $get('is_divorced'))
+                                    ->required(fn(Get $get) => $get('is_divorced'))
+                                    ->afterOrEqual('marriage_date'),
+                            ]),
+
+                    ])
+                    ->columns(1)
+                    ->columnSpanFull(),
+
+            ])
+            ->columns(1);
     }
 }

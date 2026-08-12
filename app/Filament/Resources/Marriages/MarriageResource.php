@@ -5,9 +5,10 @@ namespace App\Filament\Resources\Marriages;
 use App\Filament\Resources\Marriages\Pages\CreateMarriage;
 use App\Filament\Resources\Marriages\Pages\EditMarriage;
 use App\Filament\Resources\Marriages\Pages\ListMarriages;
-use App\Filament\Resources\Marriages\Schemas\MarriageForm;
-use App\Filament\Resources\Marriages\Tables\MarriagesTable;
 use App\Filament\Resources\Marriages\Pages\ViewMarriage;
+use App\Filament\Resources\Marriages\Schemas\MarriageForm;
+use App\Filament\Resources\Marriages\Schemas\MarriageInfolist;
+use App\Filament\Resources\Marriages\Tables\MarriagesTable;
 use App\Models\Marriage;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -33,6 +34,11 @@ class MarriageResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return MarriageForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return MarriageInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
