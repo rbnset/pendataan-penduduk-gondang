@@ -54,7 +54,7 @@ class Resident extends Model
     {
         return Attribute::make(
             get: fn () => $this->birth_date
-                ? (int) $this->birth_date->diffInDays(now())
+                ? $this->birth_date->diffInDays(now())
                 : null,
         );
     }
@@ -73,7 +73,11 @@ class Resident extends Model
                     return "{$diff->y} tahun {$diff->m} bulan";
                 }
 
-                return "{$diff->m} bulan {$diff->d} hari";
+                if ($diff->m > 0) {
+                    return "{$diff->m} bulan {$diff->d} hari";
+                }
+
+                return "{$diff->d} hari";
             },
         );
     }

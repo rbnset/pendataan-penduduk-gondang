@@ -15,19 +15,28 @@ class HouseholdForm
             ->components([
                 Select::make('rt_id')
                     ->relationship('rt', 'number')
-                    ->label('RT')
+                    ->label('Wilayah RT')
+                    ->getOptionLabelFromRecordUsing(
+                        fn ($record) => 'RT ' . $record->number . ' / RW ' . $record->rw->number
+                    )
                     ->searchable()
                     ->preload()
                     ->required(),
+
                 TextInput::make('no_kk')
                     ->label('Nomor KK')
-                    ->required(),
+                    ->required()
+                    ->maxLength(20),
+
                 TextInput::make('pln_customer_number')
                     ->label('ID Pelanggan PLN')
-                    ->default(null),
+                    ->maxLength(20)
+                    ->nullable(),
+
                 Textarea::make('address')
                     ->label('Alamat')
                     ->required()
+                    ->rows(3)
                     ->columnSpanFull(),
             ]);
     }
