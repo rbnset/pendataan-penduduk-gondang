@@ -7,6 +7,7 @@ use App\Filament\Resources\Marriages\Pages\EditMarriage;
 use App\Filament\Resources\Marriages\Pages\ListMarriages;
 use App\Filament\Resources\Marriages\Schemas\MarriageForm;
 use App\Filament\Resources\Marriages\Tables\MarriagesTable;
+use App\Filament\Resources\Marriages\Pages\ViewMarriage;
 use App\Models\Marriage;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -56,6 +57,7 @@ class MarriageResource extends Resource
         return [
             'index' => ListMarriages::route('/'),
             'create' => CreateMarriage::route('/create'),
+            'view' => ViewMarriage::route('/{record}'),
             'edit' => EditMarriage::route('/{record}/edit'),
         ];
     }

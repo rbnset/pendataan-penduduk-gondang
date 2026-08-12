@@ -36,4 +36,14 @@ class Marriage extends Model
     {
         return $this->belongsTo(Resident::class, 'wife_resident_id');
     }
+
+    public function scopeActive($query)
+    {
+        return $query->whereNull('divorce_date');
+    }
+
+    public function scopeHistory($query)
+    {
+        return $query->whereNotNull('divorce_date');
+    }
 }

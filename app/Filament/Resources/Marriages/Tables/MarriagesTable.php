@@ -5,8 +5,11 @@ namespace App\Filament\Resources\Marriages\Tables;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Filament\Tables\Filters\SelectFilter;
+use Illuminate\Database\Eloquent\Builder;
 
 class MarriagesTable
 {
@@ -36,6 +39,15 @@ class MarriagesTable
                     ->label('No. Akta Cerai')
                     ->searchable()
                     ->toggleable(),
+                TextColumn::make('marriage_status')
+                    ->label('Status')
+                    ->state(fn ($record) => $record->divorce_date ? 'Berakhir' : 'Aktif')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Aktif' => 'success',
+                        'Berakhir' => 'gray',
+                        default => 'gray',
+                    }),
                 TextColumn::make('divorce_date')
                     ->label('Tanggal Cerai')
                     ->date('d M Y')
@@ -54,9 +66,22 @@ class MarriagesTable
             ])
             ->striped()
             ->filters([
-                //
+                SelectFilter::make('marriage_status')
+                    ->label('Status Pernikahan')
+                    ->options([
+                        'active' => 'Aktif',
+                        'history' => 'Riwayat',
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return match ($data['value'] ?? null) {
+                            'active' => $query->whereNull('divorce_date'),
+                            'history' => $query->whereNotNull('divorce_date'),
+                            default => $query,
+                        };
+                    }),
             ])
             ->recordActions([
+                ViewAction::make(),
                 EditAction::make(),
             ])
             ->toolbarActions([
