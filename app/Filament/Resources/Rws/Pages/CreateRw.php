@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Rws\Pages;
 
 use App\Filament\Resources\Rws\RwResource;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateRw extends CreateRecord
@@ -22,5 +23,16 @@ class CreateRw extends CreateRecord
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
+    }
+
+    protected function getCreatedNotification(): ?Notification
+    {
+        return Notification::make()
+            ->success()
+            ->title('RW berhasil ditambahkan')
+            ->body(
+                "RW {$this->record->number} berhasil ditambahkan ke data wilayah."
+            )
+            ->duration(5000);
     }
 }
